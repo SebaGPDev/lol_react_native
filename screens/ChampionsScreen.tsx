@@ -38,7 +38,7 @@ const ChampionsScreen = () => {
             />
             <View style={{ alignItems: 'center' }}>
                 <Pressable android_ripple={{ color: "white" }} style={styles.button} onPress={handleLoadMore}>
-                    <Text style={styles.text}>LOAD MORE</Text>
+                    <Text style={styles.text}>Cargar Mas</Text>
                 </Pressable>
             </View>
         </View>

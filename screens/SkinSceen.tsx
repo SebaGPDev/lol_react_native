@@ -1,63 +1,64 @@
-import React, { useEffect, useState } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { Image, SafeAreaView, StyleSheet, FlatList } from 'react-native';
+import { RouteProp, useRoute } from '@react-navigation/native';
+import { RootStackParamList } from '../interface/RootStackPrams';
+
+type SkinScreenParams = {
+  championId: string;
+};
 
 const SkinScreen = () => {
-    const route = useRoute();
-    const championId = route.params?.championId as string;
-    const [skinImages, setSkinImages] = useState([]);
+  const route = useRoute<RouteProp<RootStackParamList, 'Skin'> & { params: SkinScreenParams }>();
+  const championId = route.params?.championId as string;
+  const [skinImages, setSkinImages] = useState<string[]>([]);
 
-    useEffect(() => {
-        const fetchSkins = async () => {
-            try {
-                const response = await fetch(`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${championId}_0.jpg`);
-                // Obtener el número de skins que tiene el campeón
-                const numSkins = response.status === 200 ? 1 : 0;
-                let skins = [];
-                // Comenzar desde el skin 1 y buscar imágenes hasta que se alcance un error 404
-                for (let i = 1; i <= numSkins; i++) {
-                    const skinUrl = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${championId}_${i}.jpg`;
-                    const skinResponse = await fetch(skinUrl);
-                    if (skinResponse.status === 200) {
-                        skins.push(skinUrl);
-                    } else {
-                        break;
-                    }
-                }
-                setSkinImages(skins);
-            } catch (error) {
-                console.log(error);
-            }
-        };
-        fetchSkins();
-    }, [championId]);
+  useEffect(() => {
+    const fetchSkins = async () => {
+      try {
+        let skins = [];
+        let i = 0;
+        while (i < 30) { // maximum number of skins to fetch
+          const skinUrl = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${championId}_${i}.jpg`;
+          const skinResponse = await fetch(skinUrl);
+          if (skinResponse.status === 200) {
+            skins.push(skinUrl);
+          }
+          i++;
+        }
+        setSkinImages(skins);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchSkins();
+  }, [championId]);
 
-    return (
-        <View style={styles.container}>
-            {skinImages.map((skin, index) => (
-                <Image
-                    key={index}
-                    source={{ uri: skin }}
-                    style={styles.skinImage}
-                />
-            ))}
-        </View>
-    );
+  const renderSkin = ({ item }: { item: string }) => (
+    <Image source={{ uri: item }} style={styles.skinImage} />
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={skinImages}
+        renderItem={renderSkin}
+        keyExtractor={(item, index) => `skin_${index}`}
+      />
+    </SafeAreaView>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'black',
-    },
-    skinImage: {
-        width: 200,
-        height: 350,
-        resizeMode: 'contain',
-        marginVertical: 20,
-    },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  skinImage: {
+    width: 300,
+    height: 200,
+    marginBottom: 10,
+  },
 });
 
 export default SkinScreen;

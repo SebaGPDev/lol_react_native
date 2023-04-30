@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Image, SafeAreaView, StyleSheet, FlatList } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../interface/RootStackPrams';
+import championSkins from '../JSON/championSkins.json';
+import { ChampionSkins } from '../interface/championSkin';
 
 type SkinScreenParams = {
   championId: string;
@@ -15,15 +17,16 @@ const SkinScreen = () => {
   useEffect(() => {
     const fetchSkins = async () => {
       try {
-        let skins = [];
-        let i = 0;
-        while (i < 30) { // maximum number of skins to fetch
-          const skinUrl = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${championId}_${i}.jpg`;
-          const skinResponse = await fetch(skinUrl);
-          if (skinResponse.status === 200) {
-            skins.push(skinUrl);
+        const skins: string[] = [];
+        const championSkinNumbers: number[] = (championSkins as ChampionSkins)[championId];
+        if (championSkinNumbers) {
+          for (const skinNumber of championSkinNumbers) {
+            const skinUrl = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${championId}_${skinNumber}.jpg`;
+            const skinResponse = await fetch(skinUrl);
+            if (skinResponse.status === 200) {
+              skins.push(skinUrl);
+            }
           }
-          i++;
         }
         setSkinImages(skins);
       } catch (error) {
@@ -53,11 +56,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: "#18141c",
   },
   skinImage: {
-    width: 300,
-    height: 200,
-    marginBottom: 10,
+    width: 350,
+    height: 600,
+    marginTop: 20,
+    borderRadius: 10,
   },
 });
 

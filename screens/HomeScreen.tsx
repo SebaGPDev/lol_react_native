@@ -7,8 +7,11 @@ import * as SplashScreen from 'expo-splash-screen';
 
 // SplashScreen.preventAutoHideAsync();
 
+type HomeScreenProps = {
+    navigation: StackNavigationProp<RootStackParamList>;
+};
 
-function HomeScreen({ navigation }: { navigation: StackNavigationProp<RootStackParamList> }) {
+function HomeScreen({ navigation }: HomeScreenProps) {
     const video = React.useRef<Video | null>(null);
     React.useEffect(() => {
         if (video.current && typeof video.current.playAsync === 'function') {
@@ -22,14 +25,17 @@ function HomeScreen({ navigation }: { navigation: StackNavigationProp<RootStackP
                 <Video
                     ref={video}
                     style={styles.video}
-                    source={require("../assets/videos/HomeVideo.webm")} // Utiliza require para cargar el archivo de video
+                    source={require("../assets/videos/HomeVideo.webm")}
                     isLooping={true}
-                    resizeMode={ResizeMode.COVER} />
+                    resizeMode={ResizeMode.COVER}
+                />
             </View>
             <Image
                 source={require('../assets/Images/logo.png')}
                 style={{
-                    width: "auto", height: 170, marginTop: 70
+                    width: "auto",
+                    height: 170,
+                    marginTop: 70
                 }}
             />
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -64,21 +70,10 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         paddingVertical: 12,
         paddingHorizontal: 12,
-        borderRadius: 6.5,
+        borderRadius: 10,
         elevation: 3,
         backgroundColor: '#2b2a29',
     },
-    containerSub: {
-        flex: 1,
-        backgroundColor: "rgba(52, 52, 52, 0.7)",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-
-    image: {
-        marginBottom: 40,
-    },
-
     text: {
         fontSize: 16,
         lineHeight: 21,
@@ -86,42 +81,7 @@ const styles = StyleSheet.create({
         letterSpacing: 0.25,
         color: 'white',
     },
-
-    inputView: {
-        backgroundColor: "white",
-        borderRadius: 30,
-        width: "70%",
-        height: 45,
-        marginBottom: 20,
-
-        alignItems: "center",
-    },
-
-    TextInput: {
-        height: 50,
-        flex: 1,
-        padding: 10,
-        marginLeft: 20,
-    },
-
-    forgot_button: {
-        height: 30,
-        marginBottom: 30,
-        backgroundColor: "rgba(52, 52, 52, 0.1)",
-        textAlign: "center",
-        color: "yellow",
-    },
-
-    loginBtn: {
-        width: "80%",
-        borderRadius: 25,
-        height: 50,
-        alignItems: "center",
-        justifyContent: "center",
-        marginTop: 40,
-        backgroundColor: "white",
-    },
 });
 
+export default HomeScreen;
 
-export default HomeScreen

@@ -1,70 +1,133 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Button, Pressable, StyleSheet } from 'react-native';
-import { fetchChampions } from '../services/championGet'; // Importar la función fetchChampions y la interfaz ChampionData
+import React, { useEffect, useState, useLayoutEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, TextInput, StatusBar, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { fetchChampions } from '../services/championGet';
 import { ChampionData } from '../interface/championData';
-import Card from "../components/Card"; // Importar el componente Card
+import Card from '../components/Card';
+import { Feather } from '@expo/vector-icons';
+import { moderateScale } from 'react-native-size-matters';
 
 const ChampionsScreen = () => {
-    const [champions, setChampions] = useState<{ [key: string]: ChampionData }>({}); // Estado para almacenar los datos de los campeones
-    const [loadedChampions, setLoadedChampions] = useState<ChampionData[]>([]); // Estado para mantener los campeones cargados
-    const [loadMore, setLoadMore] = useState<boolean>(true); // Estado para habilitar/deshabilitar el botón de cargar más
+    const [champions, setChampions] = useState<{ [key: string]: ChampionData }>({});
+    const [loadedChampions, setLoadedChampions] = useState<ChampionData[]>([]);
+    const [searchVisible, setSearchVisible] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const navigation = useNavigation();
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerTitle: searchVisible ? null : 'Champions',
+            headerRight: () => (
+                <TouchableOpacity onPress={() => setSearchVisible(true)} style={styles.headerButton}>
+                    <Feather name="search" size={moderateScale(24)} color="white" />
+                </TouchableOpacity>
+            ),
+            headerStyle: {
+                backgroundColor: '#18141c',
+            },
+            headerTintColor: '#FFFFFF',
+        });
+    }, [navigation, searchVisible]);
 
     useEffect(() => {
-        // Función asincrónica para obtener los datos de los campeones
         const fetchData = async () => {
             try {
-                const championsData = await fetchChampions(); // Llamar a la función fetchChampions para obtener los datos
-                setChampions(championsData); // Actualizar el estado champions con los datos obtenidos
-                setLoadedChampions(Object.values(championsData).slice(0, 5)); // Cargar los primeros 5 campeones en el estado loadedChampions
+                const championsData = await fetchChampions();
+                const filteredChampions = Object.values(championsData).filter((champion) => {
+                    const championName = champion.name.toLowerCase();
+                    return championName.includes(searchTerm.toLowerCase());
+                });
+
+                setChampions(championsData);
+                setLoadedChampions(filteredChampions);
             } catch (error) {
-                console.error(error); // Manejar cualquier error y mostrarlo en la consola
+                console.error(error);
             }
         };
-        fetchData(); // Llamar a fetchData al montar el componente (arreglo de dependencias vacío)
-    }, []);
+        fetchData();
+    }, [searchTerm]);
 
-    // Función para cargar más campeones
-    const handleLoadMore = () => {
-        const remainingChampions = Object.values(champions).slice(loadedChampions.length, loadedChampions.length + 5); // Obtener los siguientes 5 campeones a partir del estado champions
-        setLoadedChampions([...loadedChampions, ...remainingChampions]); // Agregar los campeones cargados al estado loadedChampions
-        setLoadMore(remainingChampions.length === 5); // Habilitar/deshabilitar el botón de cargar más según si hay más campeones para cargar
+    const handleDeleteChampion = (championId: string) => {
+        const updatedChampions = { ...champions };
+        delete updatedChampions[championId];
+        setChampions(updatedChampions);
+
+        const updatedLoadedChampions = loadedChampions.filter((champion) => champion.key !== championId);
+        setLoadedChampions(updatedLoadedChampions);
     };
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#18141c", paddingLeft: 20, paddingRight: 20, paddingTop: 25 }}>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#18141c" />
+
+            {searchVisible && (
+                <View style={styles.searchContainer}>
+                    <View style={styles.searchInputContainer}>
+                        <TouchableOpacity onPress={() => setSearchVisible(false)} style={styles.cancelButton}>
+                            <Feather name="arrow-left" size={moderateScale(24)} color="white" />
+                        </TouchableOpacity>
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Buscar campeones"
+                            placeholderTextColor="#FFFFFF"
+                            value={searchTerm}
+                            onChangeText={setSearchTerm}
+                        />
+                    </View>
+                </View>
+            )}
+
             <FlatList
-                data={loadedChampions} // Pasar los campeones cargados como datos para la FlatList
-                renderItem={({ item }) => <Card champion={item} />} // Utilizar el componente Card para renderizar cada campeón
-                keyExtractor={(item: ChampionData) => item.key} // Utilizar la propiedad "key" de cada campeón como identificador único
+                data={loadedChampions}
+                renderItem={({ item }) => <Card champion={item} onDelete={() => handleDeleteChampion(item.key)} />}
+                keyExtractor={(item: ChampionData) => item.key}
+                contentContainerStyle={styles.flatListContent}
+                ListHeaderComponent={() => <View style={styles.listHeader} />}
+                ListFooterComponent={() => <View style={styles.listFooter} />}
             />
-            <View style={{ alignItems: 'center' }}>
-                <Pressable android_ripple={{ color: "white" }} style={styles.button} onPress={handleLoadMore}>
-                    <Text style={styles.text}>Cargar Mas</Text>
-                </Pressable>
-            </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    button: {
-        width: 150,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 15,
-        marginBottom: 15,
-        paddingVertical: 12,
-        paddingHorizontal: 12,
-        borderRadius: 6.5,
-        elevation: 3,
-        backgroundColor: '#2b2a29',
+    container: {
+        flex: 1,
+        backgroundColor: '#18141c',
     },
-    text: {
-        fontSize: 16,
-        lineHeight: 21,
-        fontWeight: 'bold',
-        letterSpacing: 0.25,
+    headerButton: {
+        marginRight: moderateScale(10),
+    },
+    searchContainer: {
+        marginBottom: moderateScale(1),
+        paddingHorizontal: moderateScale(16),
+    },
+    searchInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: moderateScale(1),
+        backgroundColor: '#18141c',
+        borderRadius: moderateScale(8),
+        paddingHorizontal: moderateScale(10),
+    },
+    cancelButton: {
+        paddingHorizontal: moderateScale(10),
+    },
+    searchInput: {
+        flex: 1,
         color: 'white',
+        fontSize: moderateScale(16),
+        paddingVertical: moderateScale(8),
+        marginLeft: moderateScale(10),
+    },
+    flatListContent: {
+        paddingVertical: moderateScale(1),
+        paddingHorizontal: moderateScale(16),
+    },
+    listHeader: {
+        height: moderateScale(6),
+    },
+    listFooter: {
+        height: moderateScale(6),
     },
 });
 
